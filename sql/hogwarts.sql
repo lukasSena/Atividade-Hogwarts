@@ -411,16 +411,48 @@ SELECT COUNT(*) AS linhas_log FROM log_auditoria;
 -- 5. CONTROLE DE TRANSAÇÕES (TCL)
 -- =====================================================================
 -- Questão 26
+START TRANSACTION;
+UPDATE aluno SET saldo_galeoes = saldo_galeoes - 50
+WHERE nome = 'Draco Malfoy';
+UPDATE aluno SET saldo_galeoes = saldo_galeoes + 50
+WHERE nome = 'Pansy Parkinson';
+COMMIT;
 
 -- Questão 27
+START TRANSACTION;
+UPDATE casa SET pontos = 0;
+SELECT nome_casa, pontos FROM casa;
+ROLLBACK;
+SELECT nome_casa, pontos FROM casa;
 
 -- Questão 28
+START TRANSACTION;
+INSERT INTO compra (id_aluno, id_produto, quantidade, data_compra)
+VALUES (1, 1, 1, '2026-11-10');
+SELECT nome, saldo_galeoes FROM aluno WHERE id_aluno = 1;
+SELECT nome_produto, estoque FROM produto WHERE id_produto = 1;
+ROLLBACK;
+SELECT nome, saldo_galeoes FROM aluno WHERE id_aluno = 1;
+SELECT nome_produto, estoque FROM produto WHERE id_produto = 1;
+-- Resposta: o ROLLBACK desfaz a compra e também as atualizações de estoque e saldo
+-- realizadas pelo trigger, pois as tabelas utilizam mecanismo transacional InnoDB.
 
 -- Questão 29
+START TRANSACTION;
+INSERT INTO registro_pontos (id_aluno, id_prof, pontos, motivo, data_registro)
+VALUES (12, 4, 15, 'Cuidou das estufas no feriado', '2026-11-10');
+SAVEPOINT sp_pontos_legitimos;
+INSERT INTO registro_pontos (id_aluno, id_prof, pontos, motivo, data_registro)
+VALUES (6, 2, 100, 'Favoritismo descarado', '2026-11-10');
+ROLLBACK TO SAVEPOINT sp_pontos_legitimos;
+COMMIT;
 
 -- Questão 30
--- Resposta:
-
+SELECT @@autocommit;
+-- Resposta: valor 1 significa que o MySQL confirma automaticamente cada instrução
+-- executada fora de uma transação explícita. Um CREATE TABLE provoca COMMIT implícito
+-- (DDL), encerrando a transação aberta; por isso, não se deve esperar que ROLLBACK
+-- desfaça essa criação nem as alterações confirmadas implicitamente.
 
 -- =====================================================================
 -- 6. DESAFIOS DE CONSULTA
