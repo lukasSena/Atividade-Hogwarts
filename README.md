@@ -8,7 +8,7 @@
 ## Aluno
 
 | Nome | Matrícula | Usuário do GitHub |
-| --- | --- | --- |
+| Lukas Sena |2423995 | lukasSena |
 |  |  |  |
 
 ## O cenário
