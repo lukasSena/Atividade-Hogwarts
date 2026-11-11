@@ -728,21 +728,84 @@ FROM aluno a;
 -- 7. VIEWS
 -- =====================================================================
 -- Questão 31
+CREATE VIEW vw_placar_casas AS
+SELECT c.nome_casa, c.pontos
+FROM casa c;
 
 -- Questão 32
+CREATE VIEW vw_boletim AS
+SELECT a.nome AS aluno,
+       COALESCE(c.nome_casa, 'Sem casa') AS casa,
+       d.nome_disc AS disciplina,
+       COALESCE(p.nome, 'Sem professor') AS professor,
+       m.nota, m.situacao
+FROM matricula m
+JOIN aluno a ON a.id_aluno = m.id_aluno
+LEFT JOIN casa c ON c.id_casa = a.id_casa
+JOIN disciplina d ON d.id_disc = m.id_disc
+LEFT JOIN professor p ON p.id_prof = d.id_prof;
 
 -- Questão 33
+CREATE VIEW vw_extrato_loja AS
+SELECT a.nome AS aluno, pr.nome_produto AS produto, pr.loja,
+       co.quantidade, co.valor_total, co.data_compra
+FROM compra co
+JOIN aluno a ON a.id_aluno = co.id_aluno
+JOIN produto pr ON pr.id_produto = co.id_produto;
 
 -- Questão 34
+CREATE VIEW vw_alunos_destaque AS
+SELECT a.nome AS aluno, c.nome_casa AS casa,
+       ROUND(AVG(m.nota), 2) AS media
+FROM aluno a
+JOIN casa c ON c.id_casa = a.id_casa
+JOIN matricula m ON m.id_aluno = a.id_aluno
+GROUP BY a.id_aluno, a.nome, c.nome_casa
+HAVING AVG(m.nota) >= 8;
 
 -- Questão 35
+CREATE VIEW vw_quadro_professores AS
+SELECT p.nome AS professor,
+       COALESCE(c.nome_casa, 'Não é diretor') AS casa_que_dirige,
+       (SELECT COUNT(*) FROM disciplina d
+        WHERE d.id_prof = p.id_prof) AS quantidade_disciplinas,
+       COALESCE((SELECT SUM(r.pontos) FROM registro_pontos r
+                 WHERE r.id_prof = p.id_prof), 0) AS total_pontos
+FROM professor p
+LEFT JOIN casa c ON c.id_casa = p.id_casa;
 
 -- Questão 36
+-- Consulte o placar
+SELECT * FROM vw_placar_casas ORDER BY pontos DESC;
+
+-- Boletim apenas dos alunos da Corvinal
+SELECT * FROM vw_boletim WHERE casa = 'Corvinal';
+
+-- Total faturado por loja
+SELECT loja, SUM(valor_total) AS total_faturado
+FROM vw_extrato_loja
+GROUP BY loja
+ORDER BY total_faturado DESC;
+
+-- Alunos destaque da maior para a menor média
+SELECT * FROM vw_alunos_destaque ORDER BY media DESC;
+
+-- Quadro de professores do maior para o menor total de pontos
+SELECT * FROM vw_quadro_professores ORDER BY total_pontos DESC;
 
 -- Questão 37
--- O que mudou e por quê:
+INSERT INTO registro_pontos (id_aluno, id_prof, pontos, motivo, data_registro)
+VALUES (11, 1, 20, 'Venceu a primeira tarefa do Torneio', '2026-11-10');
+
+-- O que mudou e por quê: a pontuação da Lufa-Lufa aumenta em 20 pontos,
+-- passando de 50 para 70. A view consulta as tabelas atuais; por isso reflete
+-- automaticamente as alterações feitas, sem precisar ser recriada.
+SELECT * FROM vw_placar_casas ORDER BY pontos DESC;
 
 -- Questão 38
+CREATE OR REPLACE VIEW vw_placar_casas AS
+SELECT c.nome_casa, c.fundador, c.pontos
+FROM casa c;
 
 
 -- =====================================================================
